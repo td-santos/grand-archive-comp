@@ -116,6 +116,9 @@ const els = {
   newDeckOverlay: document.getElementById("newDeckOverlay"),
   createDeckForm: document.getElementById("createDeckForm"),
   createDeckName: document.getElementById("createDeckName"),
+  avatarImg: document.getElementById("avatarImg"),
+  avatarOverlay: document.getElementById("avatarOverlay"),
+  avatarGrid: document.getElementById("avatarGrid"),
   printRoot: document.getElementById("printRoot"),
 };
 
@@ -212,6 +215,47 @@ function saveProxy() {
 function hiResImage(src) {
   if (!src) return "";
   return src;
+}
+
+function currentAvatar() {
+  return localStorage.getItem("ga-avatar") || "";
+}
+
+function applyAvatar(src) {
+  const value = src || "";
+  if (value) localStorage.setItem("ga-avatar", value);
+  else localStorage.removeItem("ga-avatar");
+  if (els.avatarImg) els.avatarImg.src = value || "img/card-back.jpg";
+}
+
+function closeAvatarPicker() {
+  els.avatarOverlay.hidden = true;
+}
+
+function openAvatarPicker() {
+  const champs = typeof CHAMPIONS !== "undefined" ? CHAMPIONS : [];
+  els.avatarGrid.innerHTML = "";
+  const options = [{ name: "Verso da carta", image: "", default: true }].concat(
+    champs.map((c) => ({ name: c.name, image: IMG(c.image) }))
+  );
+  const active = currentAvatar();
+  options.forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "avatar-item" + ((opt.image || "") === active ? " active" : "");
+    btn.innerHTML =
+      '<img alt="" src="' + (opt.image || "img/card-back.jpg") + '" />' +
+      "<span>" +
+      escapeHtml(opt.name) +
+      "</span>";
+    btn.addEventListener("click", () => {
+      applyAvatar(opt.image);
+      closeAvatarPicker();
+      toast(opt.default ? "Avatar padrao restaurado" : "Avatar atualizado");
+    });
+    els.avatarGrid.appendChild(btn);
+  });
+  els.avatarOverlay.hidden = false;
 }
 
 function deckCover(deck) {
@@ -605,23 +649,52 @@ function renderFace() {
 
 const translateCache = new Map();
 
-async function translateText(text) {
-  const key = (text || "").trim();
-  if (!key) return "";
-  if (translateCache.has(key)) return translateCache.get(key);
+function isBadTranslation(out, key) {
+  if (!out) return true;
+  const t = out.trim();
+  if (!t) return true;
+  if (/MYMEMORY WARNING/i.test(t)) return true;
+  if (/YOU USED ALL AVAILABLE FREE TRANSLATIONS/i.test(t)) return true;
+  return t === key.trim();
+}
+
+async function translateViaGoogle(key) {
+  try {
+    const url =
+      "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=pt&dt=t&q=" +
+      encodeURIComponent(key.slice(0, 1500));
+    const data = await getJSON(url);
+    if (Array.isArray(data) && Array.isArray(data[0])) {
+      return data[0].map((seg) => (seg && seg[0]) || "").join("").trim();
+    }
+    return "";
+  } catch (err) {
+    return "";
+  }
+}
+
+async function translateViaMyMemory(key) {
   try {
     const url =
       "https://api.mymemory.translated.net/get?q=" +
       encodeURIComponent(key.slice(0, 500)) +
       "&langpair=en|pt-BR";
     const data = await getJSON(url);
-    const out = (data.responseData && data.responseData.translatedText) || key;
-    const clean = out.replace(/^\s*MYMEMORY WARNING:.*/i, key).trim() || key;
-    translateCache.set(key, clean);
-    return clean;
+    return (data.responseData && data.responseData.translatedText) || "";
   } catch (err) {
-    return key;
+    return "";
   }
+}
+
+async function translateText(text) {
+  const key = (text || "").trim();
+  if (!key) return "";
+  if (translateCache.has(key)) return translateCache.get(key);
+  let out = await translateViaGoogle(key);
+  if (isBadTranslation(out, key)) out = await translateViaMyMemory(key);
+  const clean = isBadTranslation(out, key) ? key : out.trim();
+  translateCache.set(key, clean);
+  return clean;
 }
 
 async function searchCards(name) {
@@ -980,6 +1053,12 @@ async function copyExport() {
 
 document.getElementById("btnHome").addEventListener("click", showHome);
 document.getElementById("btnBack").addEventListener("click", showHome);
+document.getElementById("btnAvatar").addEventListener("click", openAvatarPicker);
+document.getElementById("btnCloseAvatar").addEventListener("click", closeAvatarPicker);
+els.avatarOverlay.addEventListener("click", (e) => {
+  if (e.target === els.avatarOverlay) closeAvatarPicker();
+});
+applyAvatar(currentAvatar());
 function expandCards(list) {
   const out = [];
   (list || []).forEach((item) => {
