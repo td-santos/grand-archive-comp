@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Grand Archive TCG | Arquivo</title>
+  <title>Grand Archive TCG | Home</title>
+  <link rel="icon" type="image/jpeg" href="img/card-back.jpg" />
+  <link rel="apple-touch-icon" href="img/card-back.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=8" />
+  <link rel="stylesheet" href="css/style.css?v=18" />
   <script>
     (function () {
       var t = localStorage.getItem("ga-theme");
@@ -24,7 +26,7 @@
 
   <header class="topbar">
     <button class="brand" id="btnHome" type="button">
-      <span class="brand-mark">GA</span>
+      <span class="brand-mark"><img src="img/card-back.jpg" alt="Grand Archive" /></span>
       <span class="brand-text">
         <strong>Grand Archive</strong>
         <small>Arquivo de cartas</small>
@@ -42,9 +44,11 @@
     </form>
 
     <nav class="nav">
-      <button class="nav-btn active" id="navHome" type="button">Arquivo</button>
+      <button class="nav-btn active" id="navHome" type="button">Home</button>
       <button class="nav-btn" id="navMine" type="button">Minha colecao</button>
       <button class="nav-btn" id="navDecks" type="button">Decks</button>
+      <button class="nav-btn" id="navProxy" type="button">Proxy</button>
+      <button class="nav-btn" id="navKeywords" type="button">Keywords</button>
     </nav>
 
     <button class="theme-btn" id="btnTheme" type="button" aria-label="Alternar tema">
@@ -133,16 +137,50 @@
       <div class="deck-list" id="deckList"></div>
       <div id="deckEditor" hidden>
         <div class="toolbar deck-toolbar">
-          <button class="ghost" id="btnDecksBack" type="button">Voltar aos decks</button>
-          <div class="toolbar-copy">
-            <h2 id="deckNameTitle">Deck</h2>
-            <p id="deckCount"></p>
+          <button class="ghost" id="btnDecksBack" type="button">Voltar</button>
+          <div class="toolbar-actions">
+            <button class="ghost" id="btnCoverDeck" type="button">Definir capa</button>
+            <button class="ghost" id="btnPrintDeck" type="button">Imprimir</button>
+            <button class="btn-main" id="btnExportDeck" type="button">Exportar</button>
           </div>
-          <button class="btn-main" id="btnExportDeck" type="button">Exportar</button>
         </div>
-        <div class="card-grid spaced-grid" id="deckGrid"></div>
+        <div class="deck-heading">
+          <h2 id="deckNameTitle">Deck</h2>
+          <p id="deckCount"></p>
+        </div>
+        <div class="card-grid spaced-grid deck-card-grid" id="deckGrid"></div>
         <p class="status" id="deckEmpty" hidden>Este deck ainda nao tem cartas.</p>
       </div>
+    </section>
+
+    <section id="viewProxy" hidden>
+      <div class="toolbar">
+        <div class="toolbar-copy">
+          <p class="eyebrow">Impressao</p>
+          <h2>Proxy A4</h2>
+          <p id="proxyMeta">Adicione cartas para imprimir 9 por folha, em alta qualidade.</p>
+        </div>
+        <div class="toolbar-actions">
+          <button class="ghost" id="btnClearProxy" type="button">Limpar</button>
+          <button class="btn-main" id="btnPrintProxy" type="button">Imprimir</button>
+        </div>
+      </div>
+      <div class="card-grid spaced-grid" id="proxyGrid"></div>
+      <p class="status" id="proxyEmpty" hidden>Nenhuma carta no proxy. Abra uma carta e toque em Adicionar ao proxy.</p>
+    </section>
+
+    <section id="viewKeywords" hidden>
+      <div class="toolbar">
+        <div class="toolbar-copy">
+          <p class="eyebrow">Regras</p>
+          <h2>Keywords</h2>
+          <p id="keywordsMeta">Lista de habilidades com o texto oficial e traducao em portugues do Brasil.</p>
+        </div>
+      </div>
+      <form class="kw-search" id="kwSearchForm">
+        <input id="kwSearch" type="search" placeholder="Filtrar keyword..." />
+      </form>
+      <div class="kw-list" id="kwList"></div>
     </section>
   </main>
 
@@ -159,6 +197,7 @@
         <div class="detail-actions">
           <button class="btn-main" id="btnAddCollection" type="button">Adicionar a colecao</button>
           <button class="ghost" id="btnAddDeck" type="button">Adicionar ao deck</button>
+          <button class="ghost" id="btnAddProxy" type="button">Adicionar ao proxy</button>
         </div>
       </div>
       <div class="detail-info">
@@ -214,7 +253,35 @@
     </article>
   </div>
 
+  <div class="overlay" id="coverPicker" hidden>
+    <article class="picker cover-picker">
+      <button class="close" id="btnCloseCover" type="button" aria-label="Fechar">
+        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <h3>Definir capa</h3>
+      <p class="lede">Escolha uma carta do deck para usar como capa.</p>
+      <div class="cover-pick-grid" id="coverPickGrid"></div>
+    </article>
+  </div>
+
+  <div class="overlay" id="newDeckOverlay" hidden>
+    <article class="picker">
+      <button class="close" id="btnCloseNewDeck" type="button" aria-label="Fechar">
+        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <h3>Novo deck</h3>
+      <p class="lede">Escolha um nome para o deck.</p>
+      <form class="picker-form" id="createDeckForm">
+        <input id="createDeckName" type="text" maxlength="48" placeholder="Nome do deck" />
+        <button class="btn-main" type="submit">Criar</button>
+      </form>
+    </article>
+  </div>
+
+  <div class="print-root" id="printRoot" hidden></div>
+
   <div class="toast" id="toast" hidden></div>
-  <script src="js/app.js?v=8"></script>
+  <script src="js/keywords.js?v=18"></script>
+  <script src="js/app.js?v=18"></script>
 </body>
 </html>

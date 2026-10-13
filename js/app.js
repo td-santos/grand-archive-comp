@@ -1,5 +1,6 @@
 const API = "https://api.gatcg.com";
 const IMG = (path) => (path ? API + path : "");
+const CARD_BACK = API + "/cards/images/card-back.jpg";
 
 const RARITY = {
   1: { text: "Comum", display: "C" },
@@ -95,6 +96,27 @@ const els = {
   btnCopyExport: document.getElementById("btnCopyExport"),
   btnExportMine: document.getElementById("btnExportMine"),
   btnExportDeck: document.getElementById("btnExportDeck"),
+  viewProxy: document.getElementById("viewProxy"),
+  proxyGrid: document.getElementById("proxyGrid"),
+  proxyEmpty: document.getElementById("proxyEmpty"),
+  proxyMeta: document.getElementById("proxyMeta"),
+  navProxy: document.getElementById("navProxy"),
+  navKeywords: document.getElementById("navKeywords"),
+  viewKeywords: document.getElementById("viewKeywords"),
+  kwList: document.getElementById("kwList"),
+  kwSearch: document.getElementById("kwSearch"),
+  keywordsMeta: document.getElementById("keywordsMeta"),
+  btnAddProxy: document.getElementById("btnAddProxy"),
+  btnPrintProxy: document.getElementById("btnPrintProxy"),
+  btnClearProxy: document.getElementById("btnClearProxy"),
+  btnPrintDeck: document.getElementById("btnPrintDeck"),
+  btnCoverDeck: document.getElementById("btnCoverDeck"),
+  coverPicker: document.getElementById("coverPicker"),
+  coverPickGrid: document.getElementById("coverPickGrid"),
+  newDeckOverlay: document.getElementById("newDeckOverlay"),
+  createDeckForm: document.getElementById("createDeckForm"),
+  createDeckName: document.getElementById("createDeckName"),
+  printRoot: document.getElementById("printRoot"),
 };
 
 const state = {
@@ -116,6 +138,7 @@ const state = {
   currentCard: null,
   collection: loadJSON("ga-collection", []),
   decks: loadJSON("ga-decks", []),
+  proxy: loadJSON("ga-proxy", []),
   activeDeckId: null,
 };
 
@@ -182,15 +205,31 @@ function saveDecks() {
   saveJSON("ga-decks", state.decks);
 }
 
+function saveProxy() {
+  saveJSON("ga-proxy", state.proxy);
+}
+
+function hiResImage(src) {
+  if (!src) return "";
+  return src;
+}
+
+function deckCover(deck) {
+  if (deck.cover) return deck.cover;
+  return CARD_BACK;
+}
+
 function hideAllViews() {
   els.viewCollections.hidden = true;
   els.viewCards.hidden = true;
   els.viewMine.hidden = true;
   els.viewDecks.hidden = true;
+  if (els.viewProxy) els.viewProxy.hidden = true;
+  if (els.viewKeywords) els.viewKeywords.hidden = true;
 }
 
 function setNav(id) {
-  [els.navHome, els.navMine, els.navDecks].forEach((b) => b && b.classList.remove("active"));
+  [els.navHome, els.navMine, els.navDecks, els.navProxy, els.navKeywords].forEach((b) => b && b.classList.remove("active"));
   const btn = document.getElementById(id);
   if (btn) btn.classList.add("active");
 }
@@ -262,6 +301,24 @@ function showMine() {
   els.viewMine.hidden = false;
   setNav("navMine");
   renderMine();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showProxy() {
+  state.mode = "proxy";
+  hideAllViews();
+  els.viewProxy.hidden = false;
+  setNav("navProxy");
+  renderProxy();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showKeywords() {
+  state.mode = "keywords";
+  hideAllViews();
+  els.viewKeywords.hidden = false;
+  setNav("navKeywords");
+  renderKeywords();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -347,7 +404,7 @@ async function loadCollections() {
     const others = state.allSets.filter((s) => !featuredPrefixes.has(s.value));
     els.otherCount.textContent = others.length + " conjuntos";
     others.forEach((s) => {
-      const card = renderSetCard({ name: s.text, prefix: s.value }, "", "");
+      const card = renderSetCard({ name: s.text, prefix: s.value }, CARD_BACK, "");
       card.addEventListener("click", () => openPrefix(s.value, s.text));
       els.otherGrid.appendChild(card);
     });
@@ -723,8 +780,11 @@ function renderDeckList() {
     const count = (deck.cards || []).reduce((n, c) => n + (c.qty || 1), 0);
     const card = document.createElement("div");
     card.className = "deck-card";
+    const cover = deckCover(deck);
     card.innerHTML =
-      "<h3>" +
+      '<div class="deck-cover">' +
+      (cover ? '<img alt="" src="' + cover + '" />' : "") +
+      "</div><h3>" +
       escapeHtml(deck.name) +
       "</h3><p>" +
       count +
@@ -812,7 +872,10 @@ function changeQty(deckId, key, delta) {
     return;
   }
   item.qty = Math.max(0, next);
-  if (item.qty === 0) deck.cards = deck.cards.filter((c) => c.key !== key);
+  if (item.qty === 0) {
+    deck.cards = deck.cards.filter((c) => c.key !== key);
+    if (deck.cover && deck.cover === item.image) deck.cover = "";
+  }
   saveDecks();
   renderDeckCards(deck);
 }
@@ -917,9 +980,226 @@ async function copyExport() {
 
 document.getElementById("btnHome").addEventListener("click", showHome);
 document.getElementById("btnBack").addEventListener("click", showHome);
+function expandCards(list) {
+  const out = [];
+  (list || []).forEach((item) => {
+    const n = Math.max(1, item.qty || 1);
+    for (let i = 0; i < n; i++) out.push(item);
+  });
+  return out;
+}
+
+function chunk(arr, size) {
+  const pages = [];
+  for (let i = 0; i < arr.length; i += size) pages.push(arr.slice(i, i + size));
+  return pages;
+}
+
+function printCards(list, title) {
+  const cards = expandCards(list).filter((c) => c && c.image);
+  if (!cards.length) {
+    toast("Nenhuma carta para imprimir");
+    return;
+  }
+  const pages = chunk(cards, 9);
+  els.printRoot.innerHTML = pages
+    .map((page) => {
+      const cells = page
+        .map((c) => '<div class="print-card"><img alt="' + escapeHtml(c.name) + '" src="' + hiResImage(c.image) + '" /></div>')
+        .join("");
+      return '<section class="print-page">' + cells + "</section>";
+    })
+    .join("");
+  els.printRoot.hidden = false;
+  document.title = title || "Proxy A4";
+  const imgs = [...els.printRoot.querySelectorAll("img")];
+  Promise.all(
+    imgs.map(
+      (img) =>
+        img.complete
+          ? Promise.resolve()
+          : new Promise((res) => {
+              img.onload = res;
+              img.onerror = res;
+            })
+    )
+  ).then(() => {
+    window.print();
+    setTimeout(() => {
+      els.printRoot.hidden = true;
+      els.printRoot.innerHTML = "";
+      document.title = "Grand Archive TCG | Home";
+    }, 400);
+  });
+}
+
+function inProxy(key) {
+  return state.proxy.some((c) => c.key === key);
+}
+
+function addToProxy() {
+  if (!state.currentCard) return;
+  const snap = snapshotCard(state.currentCard);
+  const existing = state.proxy.find((c) => c.key === snap.key);
+  if (existing) existing.qty = (existing.qty || 1) + 1;
+  else {
+    snap.qty = 1;
+    state.proxy.push(snap);
+  }
+  saveProxy();
+  toast("Adicionada ao proxy");
+  if (state.mode === "proxy") renderProxy();
+}
+
+function renderProxy() {
+  els.proxyGrid.innerHTML = "";
+  const total = state.proxy.reduce((n, c) => n + (c.qty || 1), 0);
+  els.proxyMeta.textContent = total
+    ? total + " cartas para imprimir (" + Math.ceil(total / 9) + " folhas A4)"
+    : "Adicione cartas para imprimir 9 por folha, em alta qualidade.";
+  els.proxyEmpty.hidden = state.proxy.length > 0;
+  state.proxy.forEach((item) => {
+    const wrap = document.createElement("div");
+    wrap.className = "card-tile";
+    wrap.innerHTML =
+      (item.image ? '<img alt="' + escapeHtml(item.name) + '" loading="lazy" src="' + item.image + '" />' : "") +
+      '<div class="tile-body"><h3>' +
+      escapeHtml(item.name) +
+      "</h3><p>" +
+      escapeHtml((item.types || []).map(typeLabel).join(" / ") || "Carta") +
+      "</p></div>" +
+      '<div class="qty-row"><button type="button" data-minus>-</button><span>x' +
+      (item.qty || 1) +
+      '</span><button type="button" data-plus>+</button></div>';
+    wrap.addEventListener("click", (e) => {
+      if (e.target.closest("[data-minus], [data-plus]")) return;
+      openSavedCard(item);
+    });
+    wrap.querySelector("[data-minus]").addEventListener("click", (e) => {
+      e.stopPropagation();
+      item.qty = Math.max(0, (item.qty || 1) - 1);
+      if (!item.qty) state.proxy = state.proxy.filter((c) => c.key !== item.key);
+      saveProxy();
+      renderProxy();
+    });
+    wrap.querySelector("[data-plus]").addEventListener("click", (e) => {
+      e.stopPropagation();
+      item.qty = (item.qty || 1) + 1;
+      saveProxy();
+      renderProxy();
+    });
+    els.proxyGrid.appendChild(wrap);
+  });
+}
+
+function renderKeywords() {
+  const q = ((els.kwSearch && els.kwSearch.value) || "").trim().toLowerCase();
+  const list = (typeof KEYWORDS !== "undefined" ? KEYWORDS : []).filter((k) => {
+    if (!q) return true;
+    return (k.name + " " + k.text).toLowerCase().includes(q);
+  });
+  if (els.keywordsMeta) {
+    els.keywordsMeta.textContent = list.length + " keywords com texto oficial e traducao PT-BR.";
+  }
+  els.kwList.innerHTML = "";
+  if (!list.length) {
+    const empty = document.createElement("p");
+    empty.className = "status";
+    empty.textContent = "Nenhuma keyword encontrada.";
+    els.kwList.appendChild(empty);
+    return;
+  }
+  list.forEach((k) => {
+    const card = document.createElement("article");
+    card.className = "kw-card";
+    card.innerHTML =
+      "<h3>" +
+      escapeHtml(k.name) +
+      '</h3><span class="kw-label">Ingles</span><p class="kw-en">' +
+      escapeHtml(k.text) +
+      '</p><span class="kw-label">Traducao PT-BR</span><p class="kw-pt">' +
+      escapeHtml(k.textPt || k.text) +
+      "</p>";
+    els.kwList.appendChild(card);
+  });
+}
+
 els.navHome.addEventListener("click", showHome);
 els.navMine.addEventListener("click", showMine);
 els.navDecks.addEventListener("click", () => showDecks(false));
+els.navProxy.addEventListener("click", showProxy);
+els.navKeywords.addEventListener("click", showKeywords);
+if (els.kwSearch) {
+  els.kwSearch.addEventListener("input", () => renderKeywords());
+}
+els.btnAddProxy.addEventListener("click", addToProxy);
+els.btnPrintProxy.addEventListener("click", () => printCards(state.proxy, "Proxy A4"));
+els.btnClearProxy.addEventListener("click", () => {
+  if (!state.proxy.length) return;
+  state.proxy = [];
+  saveProxy();
+  renderProxy();
+  toast("Proxy limpo");
+});
+els.btnPrintDeck.addEventListener("click", () => {
+  const deck = state.decks.find((d) => d.id === state.activeDeckId);
+  if (!deck) {
+    toast("Abra um deck para imprimir");
+    return;
+  }
+  printCards(deck.cards || [], deck.name);
+});
+
+function closeCoverPicker() {
+  els.coverPicker.hidden = true;
+}
+
+function openCoverPicker() {
+  const deck = state.decks.find((d) => d.id === state.activeDeckId);
+  if (!deck) {
+    toast("Abra um deck para definir a capa");
+    return;
+  }
+  const cards = deck.cards || [];
+  els.coverPickGrid.innerHTML = "";
+  const backBtn = document.createElement("button");
+  backBtn.type = "button";
+  backBtn.className = "cover-pick" + (!deck.cover ? " active" : "");
+  backBtn.innerHTML = '<img alt="" src="' + CARD_BACK + '" /><span>Verso da carta</span>';
+  backBtn.addEventListener("click", () => {
+    deck.cover = "";
+    saveDecks();
+    renderDeckList();
+    closeCoverPicker();
+    toast("Capa do deck atualizada");
+  });
+  els.coverPickGrid.appendChild(backBtn);
+  cards.forEach((item) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "cover-pick" + (deck.cover === item.image ? " active" : "");
+    btn.innerHTML =
+      (item.image ? '<img alt="" src="' + item.image + '" />' : "") +
+      "<span>" +
+      escapeHtml(item.name) +
+      "</span>";
+    btn.addEventListener("click", () => {
+      deck.cover = item.image || "";
+      saveDecks();
+      renderDeckList();
+      closeCoverPicker();
+      toast("Capa do deck atualizada");
+    });
+    els.coverPickGrid.appendChild(btn);
+  });
+  els.coverPicker.hidden = false;
+}
+
+els.btnCoverDeck.addEventListener("click", openCoverPicker);
+document.getElementById("btnCloseCover").addEventListener("click", closeCoverPicker);
+els.coverPicker.addEventListener("click", (e) => {
+  if (e.target === els.coverPicker) closeCoverPicker();
+});
 els.btnAddCollection.addEventListener("click", toggleCollection);
 els.btnAddDeck.addEventListener("click", openDeckPicker);
 document.getElementById("btnClosePicker").addEventListener("click", () => {
@@ -935,10 +1215,24 @@ els.newDeckForm.addEventListener("submit", (e) => {
   addCardToDeck(deck.id);
   els.deckPicker.hidden = true;
 });
+function closeNewDeck() {
+  els.newDeckOverlay.hidden = true;
+}
+
 document.getElementById("btnNewDeck").addEventListener("click", () => {
-  const name = prompt("Nome do deck");
-  if (name == null) return;
-  const deck = createDeck(name.trim() || "Novo deck");
+  els.createDeckName.value = "";
+  els.newDeckOverlay.hidden = false;
+  els.createDeckName.focus();
+});
+document.getElementById("btnCloseNewDeck").addEventListener("click", closeNewDeck);
+els.newDeckOverlay.addEventListener("click", (e) => {
+  if (e.target === els.newDeckOverlay) closeNewDeck();
+});
+els.createDeckForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = (els.createDeckName.value || "").trim() || "Novo deck";
+  const deck = createDeck(name);
+  closeNewDeck();
   openDeck(deck.id);
   renderDeckList();
 });
