@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=21" />
+  <link rel="stylesheet" href="css/style.css?v=26" />
   <script>
     (function () {
       var t = localStorage.getItem("ga-theme");
@@ -26,11 +26,7 @@
 
   <header class="topbar">
     <div class="brand">
-      <button class="brand-mark" id="btnAvatar" type="button" aria-label="Escolher avatar" title="Escolher avatar">
-        <!--<img id="avatarImg" src="img/card-back.jpg" alt="Avatar" />-->
-        
-        
-      </button>
+      <span class="brand-mark" aria-hidden="true"></span>
       <button class="brand-text" id="btnHome" type="button">
         <strong>Grand Archive</strong>
         <small>Arquivo de cartas</small>
@@ -47,7 +43,8 @@
       <ul class="suggest" id="suggestList" hidden></ul>
     </form>
 
-    <nav class="nav">
+    <nav class="nav" id="nav">
+      <span class="nav-pill" id="navPill" aria-hidden="true"></span>
       <button class="nav-btn active" id="navHome" type="button">Home</button>
       <button class="nav-btn" id="navMine" type="button">Minha colecao</button>
       <button class="nav-btn" id="navDecks" type="button">Decks</button>
@@ -268,17 +265,6 @@
     </article>
   </div>
 
-  <div class="overlay" id="avatarOverlay" hidden>
-    <article class="picker avatar-picker">
-      <button class="close" id="btnCloseAvatar" type="button" aria-label="Fechar">
-        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </button>
-      <h3>Escolher avatar</h3>
-      <p class="lede">Selecione o rosto de um campeao para representar voce.</p>
-      <div class="avatar-grid" id="avatarGrid"></div>
-    </article>
-  </div>
-
   <div class="overlay" id="newDeckOverlay" hidden>
     <article class="picker">
       <button class="close" id="btnCloseNewDeck" type="button" aria-label="Fechar">
@@ -296,8 +282,7 @@
   <div class="print-root" id="printRoot" hidden></div>
 
   <div class="toast" id="toast" hidden></div>
-  <script src="js/keywords.js?v=21"></script>
-  <script src="js/champions.js?v=21"></script>
-  <script src="js/app.js?v=21"></script>
+  <script src="js/keywords.js?v=26"></script>
+  <script src="js/app.js?v=26"></script>
 </body>
 </html>

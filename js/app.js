@@ -38,6 +38,9 @@ const SPEED_PT = {
 };
 
 const els = {
+  fx: document.querySelector(".fx"),
+  nav: document.getElementById("nav"),
+  navPill: document.getElementById("navPill"),
   viewCollections: document.getElementById("viewCollections"),
   viewCards: document.getElementById("viewCards"),
   featuredGrid: document.getElementById("featuredGrid"),
@@ -116,9 +119,6 @@ const els = {
   newDeckOverlay: document.getElementById("newDeckOverlay"),
   createDeckForm: document.getElementById("createDeckForm"),
   createDeckName: document.getElementById("createDeckName"),
-  avatarImg: document.getElementById("avatarImg"),
-  avatarOverlay: document.getElementById("avatarOverlay"),
-  avatarGrid: document.getElementById("avatarGrid"),
   printRoot: document.getElementById("printRoot"),
 };
 
@@ -217,47 +217,6 @@ function hiResImage(src) {
   return src;
 }
 
-function currentAvatar() {
-  return localStorage.getItem("ga-avatar") || "";
-}
-
-function applyAvatar(src) {
-  const value = src || "";
-  if (value) localStorage.setItem("ga-avatar", value);
-  else localStorage.removeItem("ga-avatar");
-  if (els.avatarImg) els.avatarImg.src = value || "img/card-back.jpg";
-}
-
-function closeAvatarPicker() {
-  els.avatarOverlay.hidden = true;
-}
-
-function openAvatarPicker() {
-  const champs = typeof CHAMPIONS !== "undefined" ? CHAMPIONS : [];
-  els.avatarGrid.innerHTML = "";
-  const options = [{ name: "Verso da carta", image: "", default: true }].concat(
-    champs.map((c) => ({ name: c.name, image: IMG(c.image) }))
-  );
-  const active = currentAvatar();
-  options.forEach((opt) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "avatar-item" + ((opt.image || "") === active ? " active" : "");
-    btn.innerHTML =
-      '<img alt="" src="' + (opt.image || "img/card-back.jpg") + '" />' +
-      "<span>" +
-      escapeHtml(opt.name) +
-      "</span>";
-    btn.addEventListener("click", () => {
-      applyAvatar(opt.image);
-      closeAvatarPicker();
-      toast(opt.default ? "Avatar padrao restaurado" : "Avatar atualizado");
-    });
-    els.avatarGrid.appendChild(btn);
-  });
-  els.avatarOverlay.hidden = false;
-}
-
 function deckCover(deck) {
   if (deck.cover) return deck.cover;
   return CARD_BACK;
@@ -272,10 +231,26 @@ function hideAllViews() {
   if (els.viewKeywords) els.viewKeywords.hidden = true;
 }
 
+function moveNavPill(animate) {
+  const pill = els.navPill;
+  const active = document.querySelector(".nav-btn.active");
+  if (!pill || !active) return;
+  if (animate === false) pill.style.transition = "none";
+  pill.style.width = active.offsetWidth + "px";
+  pill.style.height = active.offsetHeight + "px";
+  pill.style.transform = "translate(" + active.offsetLeft + "px, " + active.offsetTop + "px)";
+  pill.style.opacity = "1";
+  if (animate === false) {
+    void pill.offsetWidth;
+    pill.style.transition = "";
+  }
+}
+
 function setNav(id) {
   [els.navHome, els.navMine, els.navDecks, els.navProxy, els.navKeywords].forEach((b) => b && b.classList.remove("active"));
   const btn = document.getElementById(id);
   if (btn) btn.classList.add("active");
+  moveNavPill();
 }
 
 function toast(msg) {
@@ -1053,12 +1028,6 @@ async function copyExport() {
 
 document.getElementById("btnHome").addEventListener("click", showHome);
 document.getElementById("btnBack").addEventListener("click", showHome);
-document.getElementById("btnAvatar").addEventListener("click", openAvatarPicker);
-document.getElementById("btnCloseAvatar").addEventListener("click", closeAvatarPicker);
-els.avatarOverlay.addEventListener("click", (e) => {
-  if (e.target === els.avatarOverlay) closeAvatarPicker();
-});
-applyAvatar(currentAvatar());
 function expandCards(list) {
   const out = [];
   (list || []).forEach((item) => {
@@ -1412,3 +1381,7 @@ if (btnTheme) {
 }
 
 loadCollections();
+moveNavPill(false);
+window.addEventListener("resize", () => moveNavPill(false));
+window.addEventListener("load", () => moveNavPill(false));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveNavPill(false));
