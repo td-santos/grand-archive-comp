@@ -64,3 +64,35 @@ const KEYWORDS = [
   { name: "Unblockable", text: "This unit's attacks can't be intercepted and ignore taunt.", textPt: "Os ataques desta unidade nao podem ser interceptados e ignoram taunt." },
   { name: "Vigor", text: "This unit wakes up at the beginning of your end step.", textPt: "Esta unidade acorda no inicio da sua etapa final." }
 ];
+
+function renderKeywords() {
+  const q = ((els.kwSearch && els.kwSearch.value) || "").trim().toLowerCase();
+  const list = (typeof KEYWORDS !== "undefined" ? KEYWORDS : []).filter((k) => {
+    if (!q) return true;
+    return (k.name + " " + k.text).toLowerCase().includes(q);
+  });
+  if (els.keywordsMeta) {
+    els.keywordsMeta.textContent = list.length + " keywords com texto oficial e traducao PT-BR.";
+  }
+  els.kwList.innerHTML = "";
+  if (!list.length) {
+    const empty = document.createElement("p");
+    empty.className = "status";
+    empty.textContent = "Nenhuma keyword encontrada.";
+    els.kwList.appendChild(empty);
+    return;
+  }
+  list.forEach((k) => {
+    const card = document.createElement("article");
+    card.className = "kw-card";
+    card.innerHTML =
+      "<h3>" +
+      escapeHtml(k.name) +
+      '</h3><span class="kw-label">Ingles</span><p class="kw-en">' +
+      escapeHtml(k.text) +
+      '</p><span class="kw-label">Traducao PT-BR</span><p class="kw-pt">' +
+      escapeHtml(k.textPt || k.text) +
+      "</p>";
+    els.kwList.appendChild(card);
+  });
+}

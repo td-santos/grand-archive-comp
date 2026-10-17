@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=26" />
+  <link rel="stylesheet" href="css/style.css?v=34" />
   <script>
     (function () {
       var t = localStorage.getItem("ga-theme");
@@ -25,11 +25,22 @@
   </div>
 
   <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <button class="brand-text" id="btnHome" type="button">
-        <strong>Grand Archive</strong>
-        <small>Arquivo de cartas</small>
+    <div class="topbar-collapsible">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <button class="brand-text" id="btnHome" type="button">
+          <strong>Grand Archive</strong>
+          <small>Arquivo de cartas</small>
+        </button>
+      </div>
+
+      <button class="theme-btn" id="btnTheme" type="button" aria-label="Alternar tema">
+        <span class="theme-icon sun" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v2M12 19v2M4.2 12H6.2M17.8 12H19.8M6.1 6.1l1.4 1.4M16.5 16.5l1.4 1.4M6.1 17.9l1.4-1.4M16.5 7.5l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </span>
+        <span class="theme-icon moon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M16.5 13.2A7 7 0 0 1 10.8 5.2 7.2 7.2 0 1 0 18.8 14.4a6.5 6.5 0 0 1-2.3-1.2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </span>
       </button>
     </div>
 
@@ -51,15 +62,6 @@
       <button class="nav-btn" id="navProxy" type="button">Proxy</button>
       <button class="nav-btn" id="navKeywords" type="button">Keywords</button>
     </nav>
-
-    <button class="theme-btn" id="btnTheme" type="button" aria-label="Alternar tema">
-      <span class="theme-icon sun" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v2M12 19v2M4.2 12H6.2M17.8 12H19.8M6.1 6.1l1.4 1.4M16.5 16.5l1.4 1.4M6.1 17.9l1.4-1.4M16.5 7.5l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </span>
-      <span class="theme-icon moon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M16.5 13.2A7 7 0 0 1 10.8 5.2 7.2 7.2 0 1 0 18.8 14.4a6.5 6.5 0 0 1-2.3-1.2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-      </span>
-    </button>
   </header>
 
   <main class="shell">
@@ -282,7 +284,19 @@
   <div class="print-root" id="printRoot" hidden></div>
 
   <div class="toast" id="toast" hidden></div>
-  <script src="js/keywords.js?v=26"></script>
-  <script src="js/app.js?v=26"></script>
+  <script src="js/config.js?v=34"></script>
+  <script src="js/utils.js?v=34"></script>
+  <script src="js/store.js?v=34"></script>
+  <script src="js/api.js?v=34"></script>
+  <script src="js/nav.js?v=34"></script>
+  <script src="js/theme.js?v=34"></script>
+  <script src="js/browse.js?v=34"></script>
+  <script src="js/card.js?v=34"></script>
+  <script src="js/collection.js?v=34"></script>
+  <script src="js/decks.js?v=34"></script>
+  <script src="js/export.js?v=34"></script>
+  <script src="js/proxy.js?v=34"></script>
+  <script src="js/keywords.js?v=34"></script>
+  <script src="js/app.js?v=34"></script>
 </body>
 </html>
